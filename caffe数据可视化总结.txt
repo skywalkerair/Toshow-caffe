@@ -1,0 +1,63 @@
+将本地的代码上传到github:http://blog.csdn.net/qq_31852701/article/details/52944312
+参考博文：
+1.初识数据可视化http://www.cnblogs.com/denny402/p/5092075.html
+2.caffe基本类的解读（Blob，Layer,Net）：http://blog.csdn.net/mounty_fsc/article/details/51085654
+3.caffe可视化每一层的解读：http://blog.csdn.net/cfyzcc/article/details/51318200
+
+
+一.首先是显示原图：
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
+import caffe 
+
+caffe_root = 'C:\Users\Administrator\Desktop\Caffe_Using\caffe-master'  
+
+img = caffe.io.load_image(caffe_root +'\\myself\\classification_test\\501.jpg')
+print img.shape
+
+plt.imshow(img)
+plt.show()
+
+输出：(256,256,3)
+
+1.caffe输入的原图的格式是什么，caffe网络需要什么样的格式？
+解答：
+在pycaffe文件中io.py源码中：
+img = caffe.io.load_image(caffe_root +'\\myself\\classification_test\\501.jpg')
+在caffe的python接口中Image IO文件中的源码：
+def load_image(filename, color=True):
+True (default) loads as RGB while False loads as intensity (if image is already grayscale).
+Returns
+    -------
+    image : an image with type np.float32 in range [0, 1]
+        of size (H x W x 3) in RGB or
+        of size (H x W x 1) in grayscale.
+
+
+总结：刚开始load_image读入的原始图像是（H*W*3）（256,256,3），而caffe中blobs中图像数据是4维数组（BGR）（Num,Channels,Height,Width）
+1-1：Blob简介：是用于Caffe中的通信传递，提供CPU和GPU的同步能力，在数学上就是存储数组以便交流数据。
+Blob里的参数有shape_为blob维度，data_为原始数据，diff_为梯度信息，count_为该blob的总容量
+其中Blob中的shape又分为三类：
+（1）对于图像数据是4维数组（Num,Channels,Height,Width）；
+（2）对于全连接网络，使用2D blobs (shape (N, D))，然后调用InnerProductLayer；
+（3）对于参数，维度根据该层的类型和配置来确定。对于有3个输入96个输出的卷积层，Filter核 11 x 11，则blob为96 x 3 x 11 x 11. 
+对于全连接层，1000个输出，1024个输入，则blob为1000 x 1024.
+
+扩展知识：
+------------------
+1.plt(RGB)和opencv（BGR）读图片的区别,根据博客：http://blog.csdn.net/lights_joy/article/details/45933907
+opencv是以BGR的颜色空间读的图片
+所以需要转换：
+(r,g,b)=cv2.split(img)
+img=cv2.merge([b,g,r])
+plt.imshow(img)
+plt.show()
+------------------
+2.cv2.imread()接口读图像读进来的直接就是BGR格式（0-255），所以不需要缩放到【0,255】和通道变换【2，1,0】
+不需要transformer.set_raw_scale('data',255)和transformer.set_channel_swap('data',(2,1,0))
+------------------
+3.caffe.io.load_image()读进来是RGB格式和0~1(float）
+所以在进行特征提取之前要在transformer中设置transformer.set_raw_scale('data',255)(缩放至0~255）
+------------------
+
