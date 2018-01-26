@@ -1,0 +1,36 @@
+获得训练日志文件及在windows下绘制学习曲线：
+http://blog.csdn.net/dataningwei/article/details/69844235
+
+1.训练的时候要保存到log.txt文件里,就是在setup_train.bat文件后面加上 
+ >>test.txt 2>&1
+
+2.将log.txt,extract_seconds.py和parse_log.py两个文件放在一个文件一起
+
+在CMD中运行 python parse_log.py test.txt ./
+输出：test.txt.test，test.txt.train两个文件
+
+3.打开matlab，创建脚本文件：
+function drawResult()
+
+    test_name='log.txt.test';
+    train_name='log.txt.train';
+
+    figure(1),hold on
+
+    [Iters,Seconds,LearningRate,loss]=textread(train_name,'%f%f%f%f','delimiter', ',','headerlines',1);
+     plot(Iters,loss,'r');
+    [Iters,Seconds,LearningRate,accuracy,loss]=textread(test_name,'%f%f%f%f%f','delimiter', ',','headerlines',1);
+     plot(Iters,loss,'g');
+     plot(Iters,accuracy,'b');
+
+     xlabel('Iters');
+     ylabel('loss/accuracy');
+     legend('trianLoss','testLoss','testAccuracy');
+
+    hold off
+end
+
+
+4. 打印 train 和 val loss 曲线，看曲线走势。
+如果 train loss 不断下降，test loss 趋于不变，说明网络过拟合，可以用正则化方法加以改善；
+如果 train loss 和 test loss 均在下降，说明网络欠拟合，可增大学习速率继续训练直至 train loss 和 test loss 趋于平缓，再减小学习速率；
